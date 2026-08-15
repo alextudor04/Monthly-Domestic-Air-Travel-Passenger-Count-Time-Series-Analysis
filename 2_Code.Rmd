@@ -85,7 +85,7 @@ set.seed(6769)
 ```
 
 ```{r plot, fig.height=2.5, fig.width=7, echo = FALSE}
-air <- read.csv("/Users/alextudor/Desktop/air_traffic.csv")
+air <- read.csv("1_Data.csv")
 air <- air[order(air$Year, air$Month), ]
 air$Dom_Pax <- as.numeric(gsub(",", "", air$Dom_Pax))
 air$Dom_Pax <- as.numeric(air$Dom_Pax)
