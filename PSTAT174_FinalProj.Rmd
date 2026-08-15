@@ -1,0 +1,400 @@
+---
+title: "Monthly Domestic Air Travel Passenger Count Time Series Analysis "
+author: "Alexandru Tudor - alexandrutudor@ucsb.edu"
+date: "2026-03-20"
+output: pdf_document
+---
+# Abstract
+
+This project performs a thorough time series analysis on monthly domestic air travel passenger counts spanning January 2003 to September 2023. The data was obtained from the Bureau of Transportation Statistics and captures the large negative shock to air travel passenger volumes in 2020 due to the COVID-19 pandemic. Two different models are then fit to the data. First, we fit $SARIMA(0, 1, 2)(0, 1, 1)_{12}$ through the Box-Jenkins approach. Although this model passes diagnostic checks, it produces a forecast with a wide 95% prediction interval due to the large variation in data caused by the COVID-19 shock. Then, we fit $SARIMAX(0, 1, 3)(0, 1, 2)_{12}$ with a binary exogenous indicator variable for COVID-19 disruption. Furthermore parameters are selected through the auto.arima function in R, rather than through classical ACF and PACF analysis. We find that the SARIMAX model produced a lower AIC, AICc, and BIC compared to the previous SARIMA model, and also generated a forecast with a narrower 95% prediction interval. 
+
+\newpage
+
+# 1: Introduction
+
+Unbeknownst to many, air travel is a highly important economic and consumer behavior indicator for the United States. Not only is air travel data relevant for the business decisions of commercial air travel carriers, but policymakers and economists also seek this data as it can give an indication of tourism trends, travel for business, and overall health of the economy. 
+
+This project intends to perform a thorough time-series analysis on US domestic air travel passenger volumes. I chose this project because I am a Financial Math & Statistics and Economics double major at UCSB, and I believe that air travel data provides a great setting for time series analysis due to its great seasonal patterns, long-run trends, and potential external shocks such as the Great Recession and the COVID-19 pandemic. I also thought that this topic would provide me with a challenging forecasting and modeling problem, as the COVID-19 pandemic severely impacted air travel data. 
+
+A past study on this data, by the Bureau of Transportation Statistics, has found that despite the recent COVID-19 pandemic, domestic and international passenger enplanements in October 2025 are up 7.0% from October 2019, and up 1.6% from October 2024. Also, Domestic and International enplanements have reached a new all-time high for the month of October in 2025. This study affirms the BTS's belief that air travel recovers from shocks (such as COVID-19) quite quickly, and long term growth isn't inhibited much. I wish to expand on this study by BTS and specifically analyze domestic air travel passenger counts, attempting to forecast what future data may look like. 
+
+In this project, I will first attempt to model and forecast domestic air travel passenger data through a SARIMA model. Then, I will attempt to account for the large negative COVID-19 shock through applying a SARIMAX model, where I use the presence of the COVID-19 pandemic as an exogenous indicator variable. We will eventually discover that accounting for the COVID-19 pandemic through SARIMAX modeling produces a much more accurate model, and also a narrower 95% prediction interval for a 12-month forecast.
+
+\newpage
+
+# 2: Data
+
+The domestic air travel passengers time series data set has monthly observations between January 2003 and September 2023, making it 249 observations large. Furthermore, the data has monthly values ranging from 3.5 million passengers (during COVID) to over 90 million passengers during peak summer months. Excluding COVID, the values range between 55 million to 90 million passengers. 
+
+The data was obtained by the Bureau of Transportation Statistics (part of T-100 Segment data), through a census of monthly reports filed by commercial US air carriers. The data is obtainable through the link below:
+
+https://www.kaggle.com/datasets/yyxian/u-s-airline-traffic-data?resource=download
+
+I chose this dataset because I think that the clear long-run upward trend, accompanied by the strong seasonality makes it a great candidate to apply SARIMA modeling to. Furthermore, I think that the COVID-19 shock in 2020 will add a data modeling challenge that can be addressed through the introduction of an exogenous indicator variable in a SARIMAX model. In a more general sense, this data will unveil if modeling shocks through exogenous variables leads to better and more meaningful forecasts. 
+
+This dataset is also very important from a practical standpoint. First off, analyzing domestic air travel passengers is important for airlines because it can inform their real-time business decision-making such as airline capacity planning, investment, staffing, and route optimization. For example, if an airline forecasts reduced demand, then they may reduce their capacity to mitigate their financial losses. This is also important from a macroeconomic perspective since domestic air travel is a fantastic indicator of economic activity. Thus, modeling and forecasting domestic air travel passengers not only helps airlines, but also is valuable to the government, investors, and policymakers who may rely on transportation data to anticipate the state of the future economy. 
+
+\newpage
+
+# 3: Methodology
+
+## 3.1: SARIMA (p, d, q) x (P, D, Q) Model
+
+To model the domestic air travel passengers time series data, we will utilize the Seasonal Autoregressive Integrated Moving Average (SARIMA) model, which is helpful in modeling data that exhibits trend and seasonal patterns. Because of the seasonal nature of transportation data, this is a great model to apply. 
+
+We can represent the SARIMA model as follows:
+
+$$
+SARIMA(p,d,q)(P,D,Q)_s
+$$
+The parameters (p,d,q) represent the non-seasonal autoregressive, differencing, and moving average components. Similarly, (P,D,Q) represent the seasonal autoregressive, differencing, and moving average components. Lastly, the parameter, s,denotes the seasonal period. 
+
+We will apply this model through the Box-Jenkins approach:
+
+1. Exploratory Data Analysis
+2. Data Transformation (if needed)
+3. Identification of Difference and Seasonal Parameters (d, D, s)
+4. Parameter Selection
+5. Diagnostic Checks
+6. Final Model Selection
+
+To finish off, we will forecast the next 12 months of the data using the selected model. 
+
+Quick note: Parameter and final model selection will be purely though ACF and PACF analysis. This may not produce the best possible model, but we will make sure to find a better one later on. This section is simply using the Box-Jenkins methodology without the auto.arima function. 
+
+## 3.2: SARIMAX Model
+
+To address the shock in the data for the year 2020 (caused by the COVID-19 pandemic), we will apply an Seasonal Autoregressive Integrated Moving Average with Exogenous Inputs (SARIMAX) model. To account for the COVID-19 shock, we will use a binary exogenous indicator variable $u_t = 1$ for affected observations, and $u_t = 0$ otherwise. For this model, we will define the period affected by COVID-19 to be March 2020 - December 2021, since the first major dip occurred in March 2020, and the data pattern mimicked pre-COVID levels after December 2021. 
+
+First, we will apply the same transformation, and assume the same differencing parameters identified in the SARIMA model. Then, we will select our parameters $(p, q)(P, Q)$ using the auto.arima function in R. Similarly, to the SARIMA methodology, we will run diagnostic checks on the proposed model, interpret the significance of parameters, and forecast the next 12 months of the data under the assumption that $u_t = 0$. To finish off this project, we will then compare the two models generated by Methodology 3.1 and Methodology 3.2, and the forecasts that they produce.
+
+\newpage
+
+# 4: Results
+
+## 4.1: Results from SARIMA (p, d, q) x (P, D, Q) Model
+
+We will now apply a SARIMA model with the Box-Jenkins approach, and follow steps 1-6 outlined in section 3.1.
+
+### 1. Exploratory Data Analysis
+
+```{r setup, include=FALSE}
+library(astsa)
+library(forecast)
+set.seed(6769)
+```
+
+```{r plot, fig.height=2.5, fig.width=7, echo = FALSE}
+air <- read.csv("/Users/alextudor/Desktop/air_traffic.csv")
+air <- air[order(air$Year, air$Month), ]
+air$Dom_Pax <- as.numeric(gsub(",", "", air$Dom_Pax))
+air$Dom_Pax <- as.numeric(air$Dom_Pax)
+air_ts <- ts(air$Dom_Pax,
+           start = c(air$Year[1], air$Month[1]),
+           frequency = 12)
+ts.plot(air_ts, ylab = "Passengers", main = "Domestic Air Travel Passengers")
+```
+
+The time series plot of domestic air travel passengers appears to have some long run upward trend. Near 2008, the data exhibits a slightly downward trend (most likely due to the Great Recession), and in 2020, the data exhibits a large downward shock due to COVID-19. The plot also shows strong evidence of a seasonal trend, due to an easily identifiable seasonal pattern between the years. Furthermore, it appears that the magnitude of seasonal variation only increases with time. For example, the difference between 2003's highest peak and lowest dip is smaller than 2019's highest peak and lowest dip. Reference Figure 1 in the appendix for the ACF and PACF of the original data. 
+
+### 2. Data Transformation
+
+Since the magnitude of seasonal variation appears to increase throughout the time series data set, we will apply a log transformation to the data. This log transform will also account for any exponential growth that may be occurring in the data by linearizing it. To view the time series plot of the logged data, reference Figure 2 in the appendix. It appears that the log transformation removed the non-constant magnitude of seasonal variation throughout the data. 
+
+Now we will also look at the ACF and PACF output of the logged data to determine our next steps. 
+
+```{r Air Travel Log ACF/PACF, fig.height=3, echo = FALSE}
+air_log <- log(air_ts)
+par(mfrow = c(1,2))
+acf(air_log, main="Log ACF")
+pacf(air_log, main="Log PACF")
+```
+
+### 3. Identification of Difference and Seasonal Parameters (d, D, s)
+
+By analyzing the ACF of log transformed domestic air travel passengers, the ACF starts off high (at 1), and decays slowly. This validates that the series has a trend, and thus we will apply difference. We will set d=1 to remove the seemingly linear trend that we observe in the data. 
+
+Furthermore, analyzing both the time series plot and ACF plot, there appears to be extremely strong seasonal correlation in domestic air travel passenger count. Looking at the ACF plot, we see seasonal correlation occur every year (or 12 months), and thus we identify the seasonal period of our data as s = 12. Therefore, we will also apply seasonal differencing to the SARIMA model, by setting D = 1. 
+
+In short, for our SARIMA model we have:
+$$
+(d, D, s) = (1, 1, 12)
+$$
+
+### 4. Parameter Selection
+
+To select our parameters we will analyze the ACF and PACF plots of the log-differenced data. To view the time series plot of the log-differenced data, reference Figure 3 in the appendix. 
+
+```{r Air Travel Log Diff, fig.height=3, echo = FALSE}
+air_log_diff <- diff(air_log, differences = 1)
+air_log_diff <- diff(air_log_diff, lag = 12, differences = 1)
+par(mfrow = c(1,2))
+acf(air_log_diff, lag.max = 120, main="Log-Diff ACF")
+pacf(air_log_diff, lag.max = 120,  main="Log-Diff PACF")
+```
+
+After differencing, the time series (Appendix Figure 3) plot fluctuates around zero with a constant variance (ignoring the 2020 Covid-19 pandemic). Furthermore, our ACF plot does not gradually decay, and instead most autocorrelation values fall within the confidence interval (aside from strong signals at lags of 2 months and 1 year). Similarly, most PACF values also fall within the confidence interval aside from the values corresponding to lags of years 1, 2, 3, 4, 5, and 6. We will go with the assumption that our transformed data is approximately stationary, but we will proceed with caution due to the spikes present in ACF and PACF. 
+
+We will now perform parameter selection for p, q, P, and Q by analyzing the ACF and PACF graphs. 
+
+Analyzing the ACF graph, there appears to be strong signal located at lag = 2 months (0.17 years). However, the signal at lag = 1 month appears relatively weak. Thus, we will compare two models, one with a q = 1 component and one with a q = 2 component. 
+
+Also from the ACF graph, we see that there is a very strong seasonal signal located at lag = 1 year, which then cuts off for later years. Therefore, we will choose Q = 1.
+
+Analyzing the PACF graph, there does not appears to be any clear cutoff of PACF that is identifiable through the graph. Therefore, we will set p = 0 and not include an autoregressive component.
+
+Furthermore, from the PACF graph, the seasonal signals do not appear to cut off after a certain amount of years, rather tail off. Therefore, we will set P = 0 for the model. 
+
+### 5. Diagnostic Checks
+
+We will now use the sarima function in R to conduct diagnostic checks for our two proposed models. The output can be referenced in the Appendix under Figures 4 and 5. 
+
+From the output, we observe that the plot of standardized residuals behaves similarly to an iid sequence with mean 0 and variance 1, with the exception of the years 2020-2023 due to the COVID-19 pandemic. Furthermore, the ACF of residuals shows that the residuals behave similarly to white noise, as both the ACF plots have ACF's within the confidence intervals. The Normal Q-Q plot shows that the residuals are approximately normally distributed for the first and second quantiles, but then not for the third, which can be explained by the heavy outliers that the COVID-19 pandemic created in the data. Lastly, at lag H=20, Ljung-Box statistic p-value is greater than 0.05 for both models, which implies that residuals behave like white noise. 
+
+We will proceed forward with the claim that both these models pass diagnostics, but we will proceed with caution due to the large standardized residuals in 2020 caused by the COVID-19 pandemic.
+
+### 6. Final Model Selection
+
+Based on our diagnostics, we cannot eliminate any model proposed. Furthermore, from the sarima function outputs, we first analyze the significance of parameters. In $SARIMA(0, 1, 1)(0, 1, 1)_{12}$, the $sma1$ parameter has a p-value of approximately 0, but the $ma1$ parameter has a p-value = 0.7474, which suggests that the parameter q = 1 may not be significantly contributing to the model (since p-value > 0.05). Alternatively, in $SARIMA(0, 1, 2)(0, 1, 1)_{12}$, the $sma1$ parameter has a p-value of approximatly 0, the $ma2$ parameter has a p-value = 0.0007, and the $ma1$ parameter has a p-value = 0.1837. Although the $ma1$ parameter is still statistically insignificant in the model, the $ma2$ parameter is highly significant, suggesting that the parameter selection of q = 2 may be better than q = 1. 
+
+Also, we can analyze the AIC, AICc, and BIC values of the two proposed models. 
+
+$$
+SARIMA(0, 1, 1)(0, 1, 1)_{12} : AIC = -0.3446709; AICc = -0.3444527; BIC = -0.3006391
+$$
+$$
+SARIMA(0, 1, 2)(0, 1, 1)_{12} : AIC = -0.3820074; AICc = -0.381569; BIC = -0.3232984
+$$
+
+Therefore, we will pick the model with the more significant parameters, and the lower AIC, AICc, and BIC. Thus, our final selected model is: 
+
+$$
+SARIMA(0, 1, 2)(0, 1, 1)_{12}
+$$
+
+We will now use this model to conduct a 12-month forecast. To see the forecast of the log-transformed data, refer to Figure 6 in the Appendix. Below is a forecast of the non-transformed data:
+
+```{r log-forecast, include = FALSE, echo=FALSE}
+air_forecast_12 <- sarima.for(air_log, 
+                          n.ahead = 12,
+                          0,1,2,
+                          0,1,1,
+                          12)
+```
+
+```{r forecast_display, echo=FALSE}
+pred <- exp(air_forecast_12$pred)
+lower <- exp(air_forecast_12$pred - 1.96 * air_forecast_12$se)
+upper <- exp(air_forecast_12$pred + 1.96 * air_forecast_12$se)
+
+start_fc <- tsp(air_ts)[2] + 1/12
+pred_ts  <- ts(pred, start = start_fc, frequency = 12)
+low_ts   <- ts(lower, start = start_fc, frequency = 12)
+up_ts    <- ts(upper, start = start_fc, frequency = 12)
+ylim <- range(c(air_ts, low_ts, up_ts))
+xlim <- c(tsp(air_ts)[1], tsp(pred_ts)[2])
+plot(air_ts, xlim = xlim, ylim = ylim,
+     main = "12-Month Forecast of Domestic Air Travel Passengers",
+     ylab = "Passengers", xlab = "Year")
+
+x_poly <- c(time(low_ts), rev(time(up_ts)))
+y_poly <- c(as.numeric(low_ts), rev(as.numeric(up_ts)))
+polygon(x_poly, y_poly, border = NA, col = "gray85")
+
+lines(pred_ts, col = "blue", lwd = 2)
+lines(low_ts, col = "blue", lty = 2)
+lines(up_ts,  col = "blue", lty = 2)
+
+legend("topleft",
+       legend = c("Observed", "Forecast", "95% PI"),
+       lty = c(1, 1, NA),
+       lwd = c(1, 2, NA),
+       pch = c(NA, NA, 15),
+       col = c("black", "blue", "gray85"),
+       bty = "n")
+```
+
+The forecast of the data exhibits a similar seasonal trend, and long-run upward trend that is observed in the prior 20 years (with the exclusion of 2020). Furthermore, the shaded region represents a 95% prediction interval. This means that there is a 95% probability that the actual future values of the time series fall within the 95% prediction interval, assuming the model assumptions hold. This prediction is quite wide however, most likely due to the COVID-19 pandemic shock. We will try to account for this in section 4.2 using a SARIMAX model. 
+
+## 4.2: Results from SARIMAX Model
+
+First, we will define and construct our indicator variable as:
+$$
+u_t =
+\begin{cases}
+1, & \text{March 2020} \le t \le \text{December 2021} \\
+0, & \text{otherwise}
+\end{cases}
+$$
+Below is the auto.arima output when applying the function to the log-transformed domestic air travel passengers data, with the COVID indicator variable. Recall that we fix the differencing parameters d = 1, D = 1, we identified in section 4.1.
+
+```{r indicator, echo = FALSE}
+covid <- rep(0, length(air_ts))
+covid[time(air_ts) >= 2020 + 2/12 & time(air_ts) <= 2021 + 11/12] <- 1
+covid <- ts(covid, start = start(air_ts), frequency = 12)
+
+auto.arima(air_log,
+           d=1, D=1,
+           seasonal=TRUE,
+           stepwise=FALSE,
+           approximation=FALSE,
+           xreg=covid)
+```
+Hence, we select our parameters to be:
+$$
+(p, d, q)(P, D, Q)_{s} = (0, 1, 3)(0, 1, 2)_{12} 
+$$
+This varies from the parameters chosen when applying the Box-Jenkins approach to the regular SARIMA model. This is because of a couple reasons. First, the indicator variable for COVID accounts for the massive outlier in 2020, which was initially distorting our previous ACF and PACF plots that we based our parameter selection on. Second, the auto.arima function searches many more model candidates in comparison to the two model candidates that we had in the previous section. Because our previous candidates were based on ACF/PACF analysis, the auto.arima function has found better candidates that were not visible from the plots alone. 
+
+Now, we will run diagnostics on this selected model using the sarima command. The entire output of this diagnostics check can be referenced in the Appendix under Figure 7. 
+
+From the output, we observe that the plot of standardized residuals behaves similarly to an iid sequence with mean 0 and variance 1 (up to 2020). The indicator variable helped a little bit with the sudden shock at 2020, but there is still visible variation in the standardized residuals. Furthermore, the ACF of residuals shows that the residuals behave similarly to white noise, as the ACF plot has ACF's within the confidence intervals. There is only one autocorrelation (located at 1 year and 9 months) which is slightly above the confidence interval for the theoretical value. The Normal Q-Q plot shows that the residuals are approximately normally distributed up until the 2.5th quantile, which is an improvement from the previous SARIMA model. Lastly, at lag H=20, Ljung-Box statistic p-value is greater than 0.05, which implies that residuals behave like white noise. This can be verified by the command below: 
+
+```{r Box_test, echo = FALSE}
+SARIMAX_model <- Arima(log(air_ts),
+                       order = c(0,1,3),
+                       seasonal = list(order = c(0,1,2), period = 12),
+                       xreg = covid)
+Box.test(residuals(SARIMAX_model), lag=20, type="Ljung-Box")
+```
+Therefore, our model passes diagnostics. Analyzing the significance of parameters, we notice that for the parameters, $ma1$, $ma2$, $ma3$, and $sma1$ the p-value < 0.05 and thus these parameters are significant to the model. Also, we notice that $xreg$, which represents our indicator variable for COVID, has a p-value of approximately 0, which implies its significance for the model as well. We do notice however that for the parameter $sma2$, the p-value = 0.075 > 0.05. Although the $sma2$ parameter is statistically insignificant in the model, its p-value is very close to the significance threshold. Furthermore, it was selected by the auto.arima function which aims at minimizing AIC, thus we will keep $sma2$ in our model. 
+
+Analyzing the sarima output for our SARIMAX model, we obtain AIC, AICc, and BIC values: 
+
+$$
+SARIMAX(0, 1, 3)(0, 1, 2)_{12} : AIC = -0.4361614; AICc = -0.4346071; BIC = -0.3334206
+$$
+Recall that for our selected model in section 4.1: 
+
+$$
+SARIMA(0, 1, 2)(0, 1, 1)_{12} : AIC = -0.3820074; AICc = -0.381569; BIC = -0.3232984
+$$
+
+Thus, by utilizing the auto.arima command along with an indicator variable for COVID, we were able to obtain a better model with a lower AIC, AICc, and BIC. This indicates that we should use the SARIMAX model over the SARIMA model when forecasting our data, because it accounts for the COVID shock to the data, and auto.arima potentially picked better parameters compared to what the rudimentary ACF/PACF analysis produced. 
+
+We will now use the SARIMAX model to conduct a 12-month forecast. To see the forecast of the log-transformed data, refer to Figure 8 in the Appendix. Below is a forecast of the non-transformed data:
+
+
+```{r SARIMAX_log-forecast, include = FALSE, echo=FALSE}
+new_air_forecast_12 <- sarima.for(air_log, 
+                          n.ahead = 12,
+                          0,1,3,
+                          0,1,2,
+                          12, 
+                          xreg = covid,
+                          newxreg = rep(0, 12))
+```
+
+```{r SARIMAX_forecast_display, echo=FALSE}
+new_pred <- exp(new_air_forecast_12$pred)
+new_lower <- exp(new_air_forecast_12$pred - 1.96 * new_air_forecast_12$se)
+new_upper <- exp(new_air_forecast_12$pred + 1.96 * new_air_forecast_12$se)
+
+start_fc <- tsp(air_ts)[2] + 1/12
+new_pred_ts  <- ts(new_pred, start = start_fc, frequency = 12)
+new_low_ts   <- ts(new_lower, start = start_fc, frequency = 12)
+new_up_ts    <- ts(new_upper, start = start_fc, frequency = 12)
+new_ylim <- range(c(air_ts, new_low_ts, new_up_ts))
+new_xlim <- c(tsp(air_ts)[1], tsp(new_pred_ts)[2])
+plot(air_ts, xlim = new_xlim, ylim = new_ylim,
+     main = "12-Month Forecast of Domestic Air Travel Passengers",
+     ylab = "Passengers", xlab = "Year")
+
+new_x_poly <- c(time(new_low_ts), rev(time(new_up_ts)))
+new_y_poly <- c(as.numeric(new_low_ts), rev(as.numeric(new_up_ts)))
+polygon(new_x_poly, new_y_poly, border = NA, col = "gray85")
+
+lines(new_pred_ts, col = "blue", lwd = 2)
+lines(new_low_ts, col = "blue", lty = 2)
+lines(new_up_ts,  col = "blue", lty = 2)
+
+legend("topleft",
+       legend = c("Observed", "Forecast", "95% PI"),
+       lty = c(1, 1, NA),
+       lwd = c(1, 2, NA),
+       pch = c(NA, NA, 15),
+       col = c("black", "blue", "gray85"),
+       bty = "n")
+```
+It is important to note that for the forecasted values, we set $u_t = 0$ since we assume to be out of the time region affected by COVID. The forecast using the SARIMAX model accounting for COVID appears to exhibit a clear seasonal trend and a long run upward trend similar to the SARIMA model in section 4.1. However, this forecast produced a narrower 95% prediction interval. This is most likely because the indicator variable for COVID accounts of the COVID shock as an exogenous variable, and therefore models the shock as an external event (that the forecast assumes to have ended), rather than unexplained noise in the data. Hence, the SARIMAX model accounting for COVID-19 proves more beneficial in forecasting compared to the SARIMA model in section 4.1, because it produces more accurate post-COVID forecasts.
+
+\newpage
+
+# 5: Conclusion
+
+In this project, we modeled and forecasted domestic air travel passengers data using two time series methods: SARIMA modeling fit through the classic Box-Jenkins approach, and SARIMAX modeling fit through the auto.arima function with an exogenous indicator variable for COVID disruption (March 2020 - December 2021). 
+
+For the SARIMA model, we first log-transformed the data due to the non-constant variation present in the data. After, we identified our parameters $(D, d, s) = (1, 1, 12)$ through ACF and trend analysis, in order to account for linear trends and seasonality in the data. By analyzing the ACF and PACF of the log-differenced data, we selected our two candidate models: $SARIMA(0, 1, 1)(0, 1, 1)_{12}$ and $SARIMA(0, 1, 2)(0, 1, 1)_{12}$. After checking that these models passed diagnostics and analyzing the significance of the model parameters, we selected $SARIMA(0, 1, 2)(0, 1, 1)_{12}$ as our final model due to higher parameter significance, and a lower AIC, AICc, and BIC. We used this model to then generate a 12-month forecast and also displayed the 95% prediction interval, which was quite wide. 
+
+For the SARIMAX model, after fixing a log-transformation, d = 1, and D = 1, we used the auto.arima function along with an indicator variable for COVID-19 (which was equal to 1 during March 2020 - December 2021, and 0 otherwise), to select $SARIMAX(0, 1, 3)(0, 1, 2)_{12}$ as the most optimal model. We verified that this model passed diagnostics and also analyzed the significance of its parameters, which showed as mostly significant with the exception of $sma2$. It is important to note that our exogenous indicator variable for COVID was highly significant with a p-value of approximately zero. Compared to the previous SARIMA model, this model achieved a lower AIC, AICc, and BIC. Furthermore, this SARIMAX model produced a narrower 95% prediction interval in the 12-month forecast of the data, which is explained by the fact that we treated the COVID shock as an external event rather than noise in the data. 
+
+Overall, the key discovery and takeaway from this project is that accounting for the COVID shock through SARIMAX modeling along with using the auto.arima function led to a better model and forecast compared to the standard Box-Jenkins SARIMA approach. Both models however do agree on the seasonality and trend component, but the SARIMAX model does so with greater accuracy. 
+
+For future study, this project can be expanded in many directions. First off, rather than using one indicator variable to explain shocks in domestic air travel passengers data, more variables such as fuel prices and GDP can be incorporated into the SARIMAX framework. Also, an interesting idea would be to use VARMA modeling to jointly model domestic air travel passengers data alongside other economic time series data like consumer spending, which can unveil some interesting dynamic across different series. 
+
+\newpage
+
+# References
+
+Dataset: https://www.kaggle.com/datasets/yyxian/u-s-airline-traffic-data?resource=download
+
+Other Study Cited: https://www.bts.gov/newsroom/october-2025-us-airline-traffic-data-16-same-month-last-year
+
+Textbook: Time Series Analysis and its Applications with R Examples by R.Links to an external site. H. Shumway and D. S. Stoffer
+
+Insight on SARIMAX Modeling: https://medium.com/data-bistrot/predicting-time-series-with-sarimax-f805f6608cd2
+
+PSTAT 174 Lecture Slides
+
+\newpage
+
+# Appendix
+
+## Figure 1
+```{r extra 1, fig.height=3, echo = FALSE}
+par(mfrow = c(1,2))
+acf(air_ts, lag.max = 30, main = "Air Travel - ACF")
+pacf(air_ts, lag.max = 30, main = "Air Travel - PACF")
+```
+
+## Figure 2
+```{r extra 2, fig.height=2.5, fig.width=7, echo = FALSE}
+air_log <- log(air_ts)
+plot(air_log, main="Log-transformed Domestic Air Travel Passengers",
+     ylab="log(passengers)", xlab="Time")
+```
+
+## Figure 3
+```{r extra 3, fig.height=2.5, fig.width=7, echo = FALSE}
+plot(air_log_diff, main="Log-transformed and Differenced Domestic Air Travel Passengers",
+     ylab="differenced log(passengers)", xlab="Time")
+```
+
+## Figure 4
+```{r extra 4, echo = FALSE}
+model1 <- sarima(air_log, 0, 1, 1, 0, 1, 1, 12)
+```
+
+## Figure 5
+```{r extra 5, echo = FALSE}
+model2 <- sarima(air_log, 0, 1, 2, 0, 1, 1, 12)
+```
+
+## Figure 6
+```{r extra 6, echo = FALSE}
+sarima.for(air_log, n.ahead = 12, 0, 1, 2, 0, 1, 1, 12)
+```
+
+## Figure 7
+```{r extra 7, echo = FALSE}
+model_sarimax <- sarima(air_log, 0, 1, 3, 0, 1, 2, 12, xreg = covid)
+```
+
+## Figure 8
+```{r extra 8, echo = FALSE}
+sarima.for(air_log, n.ahead = 12, 0, 1, 3, 0, 1, 2, 12, xreg = covid, newxreg = rep(0, 12))
+```
+
+## R Code
+````{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+````
