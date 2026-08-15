@@ -48,9 +48,9 @@ Both models pass diagnostic checks (Ljung-Box p > 0.05 at lag H=20; residual ACF
 
 ```
 .
-├── air_traffic.csv          # Raw monthly passenger data (BTS T-100 Segment)
-├── PSTAT174_FinalProj.Rmd   # Full R Markdown analysis and code
-├── PSTAT174_FinalProj.pdf   # Rendered writeup with figures and diagnostics
+├── 1_Data.csv          # Raw monthly passenger data (BTS T-100 Segment)
+├── 2_Code.Rmd          # Full R Markdown analysis and code
+├── 3_Report.pdf        # Rendered writeup with figures and diagnostics
 └── README.md
 ```
 
